@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>中國象棋 Xiangqi</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <div>
+          <h1>中國象棋</h1>
+          <div class="sub">單機雙人／人機對戰｜點擊選子，再點目標格走子</div>
+        </div>
+        <div class="controls">
+          <button class="btn primary" id="btnNew" type="button">新對局</button>
+          <button class="btn" id="btnUndo" type="button">悔棋</button>
+        </div>
+      </header>
+
+      <main class="main">
+        <section class="boardCard">
+          <div class="statusRow">
+            <div class="status" id="statusText">載入中…</div>
+            <div class="legend">
+              <span class="chip red">紅方</span>
+              <span class="chip black">黑方</span>
+            </div>
+          </div>
+          <canvas id="board" width="760" height="840" aria-label="中國象棋棋盤"></canvas>
+          <div class="hint">
+            小技巧：可在右側切換「人機對戰」與難度；人機模式下悔棋會一次退回（玩家+AI）兩手。
+          </div>
+        </section>
+
+        <aside class="side">
+          <section class="panel">
+            <h2>模式</h2>
+            <label class="row">
+              <span>對戰</span>
+              <select id="modeSelect">
+                <option value="pvp" selected>單機雙人</option>
+                <option value="ai">人機對戰</option>
+              </select>
+            </label>
+            <label class="row">
+              <span>玩家執棋</span>
+              <select id="humanSideSelect">
+                <option value="r" selected>紅（先手）</option>
+                <option value="b">黑（後手）</option>
+              </select>
+            </label>
+            <label class="row">
+              <span>AI 難度</span>
+              <select id="aiLevelSelect">
+                <option value="beginner">入門</option>
+                <option value="easy">簡單</option>
+                <option value="normal" selected>普通</option>
+                <option value="hard">困難</option>
+                <option value="master">大師</option>
+              </select>
+            </label>
+          </section>
+
+          <section class="panel">
+            <h2>對局</h2>
+            <div class="kv"><div>輪到</div><div id="turnText">—</div></div>
+            <div class="kv"><div>狀態</div><div id="stateText">—</div></div>
+            <div class="kv"><div>步數</div><div id="moveText">0</div></div>
+          </section>
+
+          <section class="panel">
+            <h2>走子記錄</h2>
+            <ol id="movesList" class="moves"></ol>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="footer">離線即可玩（純前端）</footer>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>
+
