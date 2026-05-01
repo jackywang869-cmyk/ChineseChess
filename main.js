@@ -300,25 +300,30 @@
     if (selected) {
       const { x, y } = cellCenter(selected.r, selected.c);
       ctx.save();
-      ctx.strokeStyle = "rgba(124,92,255,0.95)";
-      ctx.lineWidth = Math.max(2, geom.cell * 0.06);
-      ctx.beginPath();
-      ctx.arc(x, y, rPiece * 0.78, 0, Math.PI * 2);
-      ctx.stroke();
+      const s = rPiece * 1.55;
+      drawCornerBox(x - s / 2, y - s / 2, s, s, "rgba(124,92,255,0.95)", Math.max(2, geom.cell * 0.06));
       ctx.restore();
     }
     if (legalTargets.length) {
       ctx.save();
       for (const t of legalTargets) {
         const { x, y } = cellCenter(t.r, t.c);
-        ctx.fillStyle = "rgba(48,213,200,0.20)";
-        ctx.beginPath();
-        ctx.arc(x, y, rPiece * 0.38, 0, Math.PI * 2);
-        ctx.fill();
         const targetPiece = board[t.r][t.c];
+        // Base hint: hollow ring + center dot
+        ctx.strokeStyle = "rgba(48,213,200,0.85)";
+        ctx.lineWidth = Math.max(2, geom.cell * 0.05);
+        ctx.beginPath();
+        ctx.arc(x, y, rPiece * 0.42, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(48,213,200,0.65)";
+        ctx.beginPath();
+        ctx.arc(x, y, rPiece * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Capture hint: outer red ring
         if (targetPiece) {
-          ctx.strokeStyle = "rgba(255,91,110,0.85)";
-          ctx.lineWidth = Math.max(2, geom.cell * 0.05);
+          ctx.strokeStyle = "rgba(255,91,110,0.92)";
+          ctx.lineWidth = Math.max(2, geom.cell * 0.06);
           ctx.beginPath();
           ctx.arc(x, y, rPiece * 0.72, 0, Math.PI * 2);
           ctx.stroke();
@@ -326,6 +331,41 @@
       }
       ctx.restore();
     }
+  }
+
+  function drawCornerBox(x, y, w, h, color, lineWidth) {
+    const k = Math.max(10, Math.min(w, h) * 0.26);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineCap = "round";
+
+    // top-left
+    ctx.beginPath();
+    ctx.moveTo(x, y + k);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + k, y);
+    ctx.stroke();
+
+    // top-right
+    ctx.beginPath();
+    ctx.moveTo(x + w - k, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w, y + k);
+    ctx.stroke();
+
+    // bottom-right
+    ctx.beginPath();
+    ctx.moveTo(x + w, y + h - k);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x + w - k, y + h);
+    ctx.stroke();
+
+    // bottom-left
+    ctx.beginPath();
+    ctx.moveTo(x + k, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.lineTo(x, y + h - k);
+    ctx.stroke();
   }
 
   function drawPieces() {
