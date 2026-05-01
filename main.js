@@ -165,8 +165,10 @@
     const H = rect.height;
     ctx.clearRect(0, 0, W, H);
     drawBoard(W, H);
-    drawHighlights();
+    // Draw move hints first, then pieces, then selection box on top.
+    drawMoveHints();
     drawPieces();
+    drawSelectionBox();
   }
 
   function drawBoard(W, H) {
@@ -295,15 +297,8 @@
     };
   }
 
-  function drawHighlights() {
+  function drawMoveHints() {
     const rPiece = Math.max(16, geom.cell * 0.38);
-    if (selected) {
-      const { x, y } = cellCenter(selected.r, selected.c);
-      ctx.save();
-      const s = rPiece * 1.55;
-      drawCornerBox(x - s / 2, y - s / 2, s, s, "rgba(124,92,255,0.95)", Math.max(2, geom.cell * 0.06));
-      ctx.restore();
-    }
     if (legalTargets.length) {
       ctx.save();
       for (const t of legalTargets) {
@@ -331,6 +326,23 @@
       }
       ctx.restore();
     }
+  }
+
+  function drawSelectionBox() {
+    if (!selected) return;
+    const rPiece = Math.max(16, geom.cell * 0.38);
+    const { x, y } = cellCenter(selected.r, selected.c);
+    ctx.save();
+    const s = rPiece * 1.55;
+    drawCornerBox(
+      x - s / 2,
+      y - s / 2,
+      s,
+      s,
+      "rgba(124,92,255,0.95)",
+      Math.max(2, geom.cell * 0.06),
+    );
+    ctx.restore();
   }
 
   function drawCornerBox(x, y, w, h, color, lineWidth) {
