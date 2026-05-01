@@ -833,13 +833,14 @@
       return pool[Math.floor(Math.random() * pool.length)];
     }
 
+    const deadlineMs = nowMs() + cfg.thinkMs;
     let best = null;
     let bestScore = -Infinity;
     const ordered = orderMoves(moves);
     const limited = cfg.maxCandidates ? ordered.slice(0, cfg.maxCandidates) : ordered;
     for (const m of limited) {
       doMove(m);
-      const score = -search(other(side), cfg.depth - 1, -Infinity, Infinity, cfg);
+      const score = -search(other(side), cfg.depth - 1, -Infinity, Infinity, cfg, deadlineMs);
       undoMove();
       if (score > bestScore) {
         bestScore = score;
@@ -852,7 +853,7 @@
       const top = [];
       for (const m of limited.slice(0, Math.min(8, limited.length))) {
         doMove(m);
-        const s = -search(other(side), cfg.depth - 1, -Infinity, Infinity, cfg);
+        const s = -search(other(side), cfg.depth - 1, -Infinity, Infinity, cfg, deadlineMs);
         undoMove();
         top.push({ m, s });
       }
@@ -872,7 +873,8 @@
     });
   }
 
-  function search(side, depth, alpha, beta, cfg) {
+  function search(side, depth, alpha, beta, cfg, deadlineMs) {
+    if (nowMs() >= deadlineMs) return evaluate(side, cfg);
     const state = gameState();
     if (state.kind === "checkmate") {
       // side to move is checkmated => very bad
@@ -888,11 +890,12 @@
     const limited = cfg.maxCandidates ? ordered.slice(0, cfg.maxCandidates) : ordered;
     for (const m of limited) {
       doMove(m);
-      const score = -search(other(side), depth - 1, -beta, -alpha, cfg);
+      const score = -search(other(side), depth - 1, -beta, -alpha, cfg, deadlineMs);
       undoMove();
       best = Math.max(best, score);
       alpha = Math.max(alpha, score);
       if (alpha >= beta) break;
+      if (nowMs() >= deadlineMs) break;
     }
     return best;
   }
@@ -930,6 +933,7 @@
           maxCandidates: 0,
           jitter: 1.0,
           topK: 6,
+          thinkMs: 120,
           pawnAdvance: 0.03,
           center: 0.01,
           inCheckPenalty: 0.35,
@@ -942,6 +946,7 @@
           maxCandidates: 14,
           jitter: 0.8,
           topK: 5,
+          thinkMs: 220,
           pawnAdvance: 0.05,
           center: 0.015,
           inCheckPenalty: 0.45,
@@ -954,6 +959,7 @@
           maxCandidates: 18,
           jitter: 0.25,
           topK: 4,
+          thinkMs: 520,
           pawnAdvance: 0.08,
           center: 0.02,
           inCheckPenalty: 0.6,
@@ -966,6 +972,7 @@
           maxCandidates: 22,
           jitter: 0.05,
           topK: 3,
+          thinkMs: 1100,
           pawnAdvance: 0.09,
           center: 0.025,
           inCheckPenalty: 0.75,
@@ -974,16 +981,24 @@
       case "master":
         return {
           randomOnly: false,
-          depth: 4,
-          maxCandidates: 26,
+          // Highest difficulty requested: depth 10.
+          // To keep the browser responsive, we also cap candidates and enforce a think-time budget.
+          depth: 10,
+          maxCandidates: 10,
           jitter: 0,
           topK: 1,
+          thinkMs: 2200,
           pawnAdvance: 0.1,
           center: 0.03,
           inCheckPenalty: 0.9,
           giveCheckBonus: 0.7,
         };
     }
+  }
+
+  function nowMs() {
+    // Prefer high-resolution timer when available.
+    return typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
   }
 
   function weightedPick(items, temperature) {
