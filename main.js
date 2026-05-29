@@ -834,19 +834,44 @@
     }
 
     const deadlineMs = nowMs() + cfg.thinkMs;
-    let best = null;
-    let bestScore = -Infinity;
     const ordered = orderMoves(moves);
     const limited = cfg.maxCandidates ? ordered.slice(0, cfg.maxCandidates) : ordered;
-    for (const m of limited) {
-      doMove(m);
-      const score = -search(other(side), cfg.depth - 1, -Infinity, Infinity, cfg, deadlineMs);
-      undoMove();
-      if (score > bestScore) {
-        bestScore = score;
-        best = m;
+
+    let best = null;
+    let bestScore = -Infinity;
+
+    // Iterative deepening: within time budget, search depth 1..N and keep best from deepest finished.
+    if (cfg.depth >= 6) {
+      for (let d = 1; d <= cfg.depth; d++) {
+        if (nowMs() >= deadlineMs) break;
+        let bestAtDepth = null;
+        let scoreAtDepth = -Infinity;
+        for (const m of limited) {
+          doMove(m);
+          const score = -search(other(side), d - 1, -Infinity, Infinity, cfg, deadlineMs);
+          undoMove();
+          if (score > scoreAtDepth) {
+            scoreAtDepth = score;
+            bestAtDepth = m;
+          }
+        }
+        if (bestAtDepth) {
+          best = bestAtDepth;
+          bestScore = scoreAtDepth;
+        }
+      }
+    } else {
+      for (const m of limited) {
+        doMove(m);
+        const score = -search(other(side), cfg.depth - 1, -Infinity, Infinity, cfg, deadlineMs);
+        undoMove();
+        if (score > bestScore) {
+          bestScore = score;
+          best = m;
+        }
       }
     }
+
     if (!best) return limited[0] || ordered[0] || null;
     if (cfg.jitter > 0) {
       // Softmax-ish pick among top few to feel less robotic on lower levels.
@@ -981,13 +1006,12 @@
       case "master":
         return {
           randomOnly: false,
-          // Highest difficulty requested: depth 10.
-          // To keep the browser responsive, we also cap candidates and enforce a think-time budget.
-          depth: 10,
-          maxCandidates: 10,
+          // Highest difficulty: target depth 20 (iterative deepening + time budget).
+          depth: 20,
+          maxCandidates: 12,
           jitter: 0,
           topK: 1,
-          thinkMs: 2200,
+          thinkMs: 5500,
           pawnAdvance: 0.1,
           center: 0.03,
           inCheckPenalty: 0.9,
